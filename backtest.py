@@ -7,21 +7,16 @@ from output import daily_trade
 #appel du module de récupération de données (dans un cache au nom de l'action backtestée) dans le fichier data_recovery
 from data_recovery import main_data_recovery
 
+#importation de la classe 'Cache' depuis aiocache
+from aiocache import Cache
+#création d'une instance 'cache' qui récupèrera les données du cache créé dans data_recovery
+cache = Cache()
 
-from data_recovery import cache
-
-
-### paramètres du backtest
-risk_reward_ratio=2   
-time_interval ="60min"    #en minutes (5,15,30)
-length_in_months= 3        #nombre de mois sur lesquels est réalisé le backtest
-symbol='IBM'      
 
 
 
 #programme appelant les différents modules externes de récupération de données, de trade, de calcul de résultats afin de réaliser le backtest de pmanière asynchrone
 async def main_backtest(symbol, time_interval, risk_reward_ratio, length_in_months): 
-    
     
     await main_data_recovery(symbol, time_interval, length_in_months) 
     #récupération des données contenues dans le cache
@@ -84,5 +79,15 @@ def analysis(daily_results):
             analysis[trade['trade']]+= trade['gains']
     analysis['total_gain']=1000*analysis['total_yield']
 
+
+
+
+### paramètres du backtest qu'on va utiliser pour tester notre programme
+risk_reward_ratio=2   
+time_interval ="30min"    #en minutes (5,15,30)
+length_in_months= 36       #nombre de mois sur lesquels est réalisé le backtest
+symbol='IBM'      
+
+#lancement du programme principal de backtest avec 
 asyncio.run(main_backtest(symbol, time_interval, risk_reward_ratio, length_in_months))
 

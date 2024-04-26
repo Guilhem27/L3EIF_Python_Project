@@ -26,9 +26,12 @@ async def telecharger_donnees_alpha_vantage(symbol, time_interval, length_in_mon
         #récupération de la liste des mois voulus pour le backtest
         months=await last_months(length_in_months)
 
+        #dictionnaire réunississant l'ensemble des données à récupérer
+        all_data={}
+
         #boucle récupérant les données OHLC pour chaque mois en commencant par le dernier(ordre chronologique)
         for month in (reversed(months)):
-        
+            print(month)
             #récupération du lien de l'APi d'Alpha Venture en prennant les arguments symbol: action,time_interval: pour avoir des intervalles d'OHLC précises, month: mois de données recherchées, outputsize=full: pour avoir l'entiereté des données du mois voulu
             url = f'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval={time_interval}&month={month}&outputsize=full&apikey=D7U8ZS51ROCMQM79'
             
@@ -41,15 +44,14 @@ async def telecharger_donnees_alpha_vantage(symbol, time_interval, length_in_mon
 
                     #extraction des données JSON de la réponse
                     data = await response.json()
-
-            #dictionnaire réunississant l'ensemble des données à récupérer
-            all_data={}
+                    #data[month]="OOOOOOoooooooooooerrrrrrrrrrrrrrrrrOOOOOOoooooooooooerrrrrrrrrrrrrrrrrOOOOOOoooooooooooerrrrrrrrrrrrrrrrrOOOOOOoooooooooooerrrrrrrrrrrrrrrrrOOOOOOoooooooooooerrrrrrrrrrrrrrrrrOOOOOOoooooooooooerrrrrrrrrrrrrrrrr"
 
             #reversed_data = {key: data[key] for key in reversed(data)}
 
             #ajout des données dans le dictionnaire
-            all_data.update(data)
-
+            all_data[month]=data
+            print(all_data)
+            
         #séparation des données regroupées par mois dans un dictionnaire dont la clé est 'Time Series ({time_interval})', en données journalières 
         all_data = await data_by_day(all_data[f'Time Series ({time_interval})'])
         
@@ -59,8 +61,6 @@ async def telecharger_donnees_alpha_vantage(symbol, time_interval, length_in_mon
 
 #la fonction détermine une liste des mois correspondants au nderniers mois demandés du plus ancien au dernier en date, dans le format adapté pour récupérer les données OHLC de chaque mois
 async def last_months(length):
-
-
 
     #récupération de la date actuelle
     current_date = datetime.now()
@@ -108,3 +108,30 @@ async def data_by_day(donnees_brutes):
 
 async def stocker_donnees_dans_cache(name, data):
     await cache.set(name, data, ttl=3600)  # TTL (Time To Live) en secondes
+
+
+def data_by_day(donnees_brutes):
+    # Dictionnaire de récupération des données journalières
+    donnees_par_jour = {}
+
+    # Parcours des données brutes
+    for timestamp, valeurs in donnees_brutes.items():
+        # Séparation de la date et de l'heure
+        date, heure = timestamp.split(" ")
+
+        # Création d'une nouvelle journée si elle n'existe pas encore
+        if date not in donnees_par_jour:
+            donnees_par_jour[date] = {}
+
+        # Ajout des valeurs pour cette heure
+        donnees_par_jour[date][heure] = valeurs
+
+    # Inversion de l'ordre des heures dans chaque journée
+    for date in donnees_par_jour:
+        donnees_par_jour[date] = dict(reversed(list(donnees_par_jour[date].items())))
+
+    # Inversion de l'ordre des jours du plus ancien au plus récent
+    donnees_par_jour_inversees = dict(reversed(list(donnees_par_jour.items())))
+
+    return donnees_par_jour_inversees
+
