@@ -13,25 +13,23 @@ async def main_data_recovery(symbol, time_interval, length_in_months):
     data = await telecharger_donnees_alpha_vantage(symbol, time_interval, length_in_months)
     
     #on crée un cache avec ces données nommé selon le nom de l'action 
-    name= symbol
-    print(data)
-    stocker_donnees_dans_cache(name, data)
+    await stocker_donnees_dans_cache(symbol, data)
 
-
+    return data
 
 #la fonction récupère dans l'API d'alpha venture les données demandées 
 async def telecharger_donnees_alpha_vantage(symbol, time_interval, length_in_months):
 
         
         #récupération de la liste des mois voulus pour le backtest
-        months=await last_months(length_in_months)
-
+        months=last_months(length_in_months)
+        
         #dictionnaire réunississant l'ensemble des données à récupérer
         all_data={}
 
         #boucle récupérant les données OHLC pour chaque mois en commencant par le dernier(ordre chronologique)
         for month in (reversed(months)):
-            print(month)
+            
             #récupération du lien de l'APi d'Alpha Venture en prennant les arguments symbol: action,time_interval: pour avoir des intervalles d'OHLC précises, month: mois de données recherchées, outputsize=full: pour avoir l'entiereté des données du mois voulu
             url = f'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval={time_interval}&month={month}&outputsize=full&apikey=D7U8ZS51ROCMQM79'
             
@@ -44,23 +42,26 @@ async def telecharger_donnees_alpha_vantage(symbol, time_interval, length_in_mon
 
                     #extraction des données JSON de la réponse
                     data = await response.json()
-                    #data[month]="OOOOOOoooooooooooerrrrrrrrrrrrrrrrrOOOOOOoooooooooooerrrrrrrrrrrrrrrrrOOOOOOoooooooooooerrrrrrrrrrrrrrrrrOOOOOOoooooooooooerrrrrrrrrrrrrrrrrOOOOOOoooooooooooerrrrrrrrrrrrrrrrrOOOOOOoooooooooooerrrrrrrrrrrrrrrrr"
 
-            #reversed_data = {key: data[key] for key in reversed(data)}
 
-            #ajout des données dans le dictionnaire
-            all_data[month]=data
-            print(all_data)
-            
-        #séparation des données regroupées par mois dans un dictionnaire dont la clé est 'Time Series ({time_interval})', en données journalières 
-        all_data = await data_by_day(all_data[f'Time Series ({time_interval})'])
+            #utilisation de l'API (limitée à 25 requêtes/jour), à mettre en commentaires et utiliser la seconde option si plus de requêtes
+            #séparation des données regroupées par mois dans un dictionnaire dont la clé est 'Time Series ({time_interval})', en données journalières 
+            data=data_by_day(data[f'Time Series ({time_interval})'])  #dans le cas de l'utilisation de l'API
+            #ajout des données dans le dictionnaire global, séparées par des clés correspondantes à chaque journée
+            all_data.update(data)
+
+            #utilisation d'un dictionnaire en local copié sur la présentation d'Alpha Venture (qu'on retrouve dans le script 'data')
+            #enlever les commentaires ci-dessous et en rajouter sur les lignes 49 et 51
+            #all_data=...(copier les données json)
+            #all_data=data_by_day(all_data)
         
+        print(all_data)
         return(all_data)  
 
 
 
 #la fonction détermine une liste des mois correspondants au nderniers mois demandés du plus ancien au dernier en date, dans le format adapté pour récupérer les données OHLC de chaque mois
-async def last_months(length):
+def last_months(length):
 
     #récupération de la date actuelle
     current_date = datetime.now()
@@ -75,41 +76,6 @@ async def last_months(length):
     return result
 
 #cette fonction sépare les données mensuelles en données journalières
-async def data_by_day(donnees_brutes):
-
-    #dictionnaire de récupération des données journalières
-    donnees_par_jour = {}
-
-    #timestamp la clé prend la forme: "2024-04-11 12:35:00"
-    for timestamp, valeurs in donnees_brutes.items():
-        
-        #on sépare donc la date de l'heure
-        date, heure = timestamp.split(" ")
-
-        #si la date n'existe pas encore dans les données journalières, on crée un nouvelle journée (dictionnaire contenant les valeurs de celle-ci)
-        if date not in donnees_par_jour:
-            donnees_par_jour[date] = {}
-        #on crée le dictionnaire de la journée contenant les OHLC correspondants basés sur les intervales de temps définis
-        donnees_par_jour[date][heure] = valeurs
-
-        # Inversion de l'ordre des jours du plus ancien au plus récent
-        donnees_par_jour_inversees = dict(reversed(list(donnees_par_jour.items())))
-         # Inversion de l'ordre des données intraday pour chaque jour
-        for jour in donnees_par_jour_inversees.values():
-            jour_inverse = dict(reversed(list(jour.items())))
-            jour.clear()
-            jour.update(jour_inverse)
-
-    #on inverse les données pour les avoir dans l'ordre chronologique
-    return (donnees_par_jour)
-
-
-
-
-async def stocker_donnees_dans_cache(name, data):
-    await cache.set(name, data, ttl=3600)  # TTL (Time To Live) en secondes
-
-
 def data_by_day(donnees_brutes):
     # Dictionnaire de récupération des données journalières
     donnees_par_jour = {}
@@ -134,4 +100,11 @@ def data_by_day(donnees_brutes):
     donnees_par_jour_inversees = dict(reversed(list(donnees_par_jour.items())))
 
     return donnees_par_jour_inversees
+
+
+#création d'un cache avec l'ensemble des données qu'on récuperera dans le main module backtest 
+async def stocker_donnees_dans_cache(name, data):
+    await cache.set('IBM', data, ttl=3600)  # TTL (Time To Live) en secondes
+
+
 
