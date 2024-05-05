@@ -5,10 +5,10 @@ def strat(candlestick, infos, last_ohlc):
     
     #compteur permettant d'évaluer la validité d'une position
     trade=0
-    
+    print(infos['trend']['growth_rate'])
     #stratégie de sortie de consolidation (on peut trade à la hausse comme à la baisse en sortie d'une phase de consolidation matérialisée par des taux de croissance [-3%:3%]
     if infos['trend']['growth_rate']<=3 or infos['trend']['growth_rate']>=-3:
-
+        print('yes')
         #sortie de phase à la hausse si la bougie précédente et celle actuelle sont comprises entre le point pivot et le niveau de résistance 1
         if float(last_ohlc[1]['4. close'])>infos['pivots']['pp'] and candlestick['4. close']<infos['pivots']['r1'] and float(last_ohlc[1]['1. open'])<infos['pivots']['r1'] and candlestick['1. open']>infos['pivots']['pp']: 
             
@@ -30,6 +30,7 @@ def strat(candlestick, infos, last_ohlc):
         
         #si le score dépasse 5 on évalue un potentiel mouvement haussier 
         if trade>=5:
+            print('yes')
             #on annonce des niveaux de TP et SL en s'appuyant sur les points pivots et l'ATR, en attendant une confirmation mais en annonçant le type de trade qui serait alors réalisé
             return {'stopLoss':(infos['pivots']['r1']-infos['indic_ATR']), 'takeProfit': infos['pivots']['r2'], 'confirmation':False, 'buy':False, 'type_position': 'buy', 'type_trade':"sortie_consolid_hausse"}
         
@@ -59,6 +60,7 @@ def strat(candlestick, infos, last_ohlc):
 
         #si le score dépasse 5 on évalue un potentiel mouvement haussier 
         if trade>=5:
+            print('yes')
             #on annonce des niveaux de TP et SL en s'appuyant sur les points pivots et l'ATR, en attendant une confirmation mais en annonçant le type de trade qui serait alors réalisé
             return {'stopLoss':(infos['pivots']['s1']+infos['indic_ATR']), 'takeProfit': infos['pivots']['s2'], 'confirmation':False, 'buy':False, 'type_position': 'sell', 'type_trade':"sortie_consolid_baisse"}
         
@@ -90,6 +92,7 @@ def strat(candlestick, infos, last_ohlc):
 
         #si le score dépasse 5 on évalue un potentiel mouvement haussier 
         if trade>=5:
+            print('yes')
             #on annonce des niveaux de TP et SL en s'appuyant sur les points pivots et l'ATR, en attendant une confirmation mais en annonçant le type de trade qui serait alors réalisé
             return {'stopLoss':(infos['pivots']['pp']-2*infos['indic_ATR']), 'takeProfit': infos['pivots']['r1'], 'confirmation':False, 'buy':False, 'type_position': 'buy', 'type_trade':"retournement_haussier"}
         
@@ -122,6 +125,7 @@ def strat(candlestick, infos, last_ohlc):
 
         #si le score dépasse 5 on évalue un potentiel mouvement baissier 
         if trade>=5:
+            print('yes')
             #on annonce des niveaux de TP et SL en s'appuyant sur les points pivots et l'ATR, en attendant une confirmation mais en annonçant le type de trade qui serait alors réalisé
             return {'stopLoss':(infos['pivots']['pp']+2*infos['indic_ATR']), 'takeProfit': infos['pivots']['s1'], 'confirmation':False, 'buy':False, 'type_position': 'sell', 'type_trade':"retournement_baissier"}
         
@@ -130,8 +134,9 @@ def strat(candlestick, infos, last_ohlc):
 
 
     #renvoie d'une situation neutre, sans position, si aucune stratégie ne correspond à la situation
-    else:
-        return {'stopLoss': None, 'takeProfit':None,'confirmation':0, 'buy':False, 'type_position': None,'type_trade':None}  
+    
+    print('no')
+    return {'stopLoss': None, 'takeProfit':None,'confirmation':0, 'buy':False, 'type_position': None,'type_trade':None}  
 
 
 
@@ -370,7 +375,6 @@ def strat_confirmation(candlestick, positions, level, last_ohlc):
 
 
         positions['type_position']=="sell"
-
 
 
 #fonctions de confirmation des stratégies en considération de motifs intradays

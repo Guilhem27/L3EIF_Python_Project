@@ -14,7 +14,7 @@ async def main_data_recovery(symbol, time_interval, length_in_months):
     
     #on crée un cache avec ces données nommé selon le nom de l'action 
     #await stocker_donnees_dans_cache(symbol, data)  ' ne fonctionne pas
-
+    print(data)
     return data
 
 #la fonction récupère dans l'API d'alpha venture les données demandées 
@@ -55,7 +55,7 @@ async def telecharger_donnees_alpha_vantage(symbol, time_interval, length_in_mon
             #all_data=...(copier les données json)
             #all_data=data_by_day(all_data)
         
-        print(all_data)
+        
         return(all_data)  
 
 

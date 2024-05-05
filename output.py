@@ -156,6 +156,7 @@ def daily_trade(raw_data, last_infos):
             if waiting_confirmation==5:
                 positions=={'stopLoss': None, 'takeProfit':None,'confirmation':0, 'buy':False, 'type_position': None, 'type_trade':None}
             
+    
             #confirmation et prise de position
             if positions['confirmation']==1:
 
