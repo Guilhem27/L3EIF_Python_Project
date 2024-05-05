@@ -13,7 +13,7 @@ async def main_data_recovery(symbol, time_interval, length_in_months):
     data = await telecharger_donnees_alpha_vantage(symbol, time_interval, length_in_months)
     
     #on crée un cache avec ces données nommé selon le nom de l'action 
-    await stocker_donnees_dans_cache(symbol, data)
+    #await stocker_donnees_dans_cache(symbol, data)  ' ne fonctionne pas
 
     return data
 
@@ -103,8 +103,8 @@ def data_by_day(donnees_brutes):
 
 
 #création d'un cache avec l'ensemble des données qu'on récuperera dans le main module backtest 
-async def stocker_donnees_dans_cache(name, data):
-    await cache.set('IBM', data, ttl=3600)  # TTL (Time To Live) en secondes
+#async def stocker_donnees_dans_cache(name, data):
+    #await cache.set('IBM', data, ttl=3600)  # TTL (Time To Live) en secondes
 
 
 

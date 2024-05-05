@@ -39,7 +39,6 @@ async def main_backtest(symbol, time_interval,length_in_months):
     }
 
 
-
     #création d'un jour 0 avec les informations initiales au sein d'un dictionnaire daily results qui contiendra à terme les éléments d'analyse technique
     #afin de ne pas perdre le flux quotidien d'infos d'un jour à l'autre, mais également les résultats/performances des prises de position, résumées avant
     #tout par la variable 'cash'
