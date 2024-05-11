@@ -76,33 +76,21 @@ def stochastic_oscillator(last_OCLH):
 
 def pivots(high, low, closing):
 
+
     # Calcul du point pivot (PP)
-    pp=high+low+closing
+    pp=round(((high+low+closing)/3),5)
 
     # Calcul des niveaux de support (S1, S2, S3)
     s1= round(((2*pp)-high),5)
     s2=round((pp-(high-low)),5)
-    s3 = round((low-2* (high-pp)),5)
 
     # Calcul des niveaux de résistance (R1, R2, R3)
     r1=round(((2*pp)-low),5)
     r2=round((pp+(high-low)),5)
-    r3 = round((high+2*(high-pp)),5)
 
     # Création d'un dictionnaire contenant les points pivots et leurs niveaux associés
-    pivots={'pp':pp, 's1': s1, 's2':s2, 's3':s3, 'r1': r1, 'r2':r2, 'r3': r3}
+    pivots={'pp':pp, 's1': s1, 's2':s2, 'r1': r1, 'r2':r2}
     return pivots
-
-
-# calcul un taux de croissance des prix sur les 100 dernières valeurs
-def trend(data):
-    # Extraction des prix de clôture
-    closes = np.array([float(d['4. close']) for d in data])
-    # Calcul du taux de croissance des 100 valeurs
-    growth_rate = ((closes[0] - closes[-1]) / closes[-1]) * 100
-
-    # Renvoyer le pourcentage de différence et le taux de croissance
-    return {'growth_rate': round(growth_rate,5)}
 
 
 
@@ -129,20 +117,13 @@ def movement(candlestick, movement):
     return movement
 
 
-
-#indicateur composé de 2 bandes permettant d'évaluer la volatilité et identifier les niveaux potentiels de surachat ou de survente
-def bollinger(last_OCLH):
-    # Calcul de la moyenne mobile
-    moyenne_mobile = np.mean([float(d['4. close']) for d in last_OCLH])
-    
-    # Calcul de l'écart-type
-    ecart_type = np.std([float(d['4. close']) for d in last_OCLH])
-    
-    # Calcul des bandes de Bollinger
-    bande_superieure = moyenne_mobile + 2 * ecart_type
-    bande_inferieure = moyenne_mobile - 2 * ecart_type
-    
-    return {
-        "bande_superieure": round(bande_superieure,5),
-        "bande_inferieure": round(bande_inferieure, 5)
-    }
+# calcul un taux de croissance des prix sur les 100 dernières valeurs
+def trend(data):
+    # Extraction des prix de clôture
+    closes = np.array([float(d['4. close']) for d in data])
+    volumes = np.array([float(d['4. close']) for d in data])
+    # Calcul du taux de croissance des 100 valeurs
+    value_growth = ((closes[0] - closes[-1]) / closes[-1]) * 100
+    volume_mean= sum(volumes)/len(volumes)
+    # Renvoyer le pourcentage de différence et le taux de croissance
+    return {'value_growth': round(value_growth,5), 'volume_mean':round(volume_mean)}
