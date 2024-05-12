@@ -1,0 +1,19 @@
+  Le projet est composé de 5 modules python et d'un fichier data.json qui doit être utilisé come un élément à copier coller.
+
+  Le module 'backtest' est le module principal qui est utilisé de manière asynchrone afin de récupérer les données en simultanée sur le module data_recovery. Les données sont récupérées grâce à l'API d'Alpha venture qui ne permet cependant de récupérer que 25 mois de données intradays par jour (sur les actions), le projet initial avait d'ailleurs pour but de réaliser du daytrading sur le forex, avec une stratégie de Points Pivots qui lui est plutôt adaptée. Le Freemium a ainsi limité l'utilisation et le test du programme, c'est pour cela que vous trouverez des données 'type' copiées sur la présentation d'Alpha Venture pour tester le code malgré les limitations posées, à copier coller dans l'emplacement prévu (mis en commentaires, il faut réaliser le transfert de '#' expliqué). Le choix des paramètres se fait aux lignes 89, 90 et 91 du module 'backtest'. 
+
+  Le programme lance alors le module de récupération data_recovery, qui était censé placer les données récupérées dans un cache qui serait récupéré au sein du module de backtest, hors après des modifications (sans avoir commit précédemment) l'utilisation de ces caches n'était plus fonctionnelle... Après plusieurs journées sans avancées j'ai alors décidé d'abandonner en laissant les vestiges du code en commentaires. 
+  
+  La fonction main_backtest appelle alors le module output sur lequel est réalisé l'analyse quotidienne des bougies, celle-ci fonctionne, à vérifier en placant un print(daily_results) en ligne 63 du backtest, qui rendra alors compte de toutes les informations traitées par le programme. Cependant, en partie du fait du manque d'occasion de tester la stratégie sur des données réelles, vous verrez que la prise de position est inefficace. En dehors du manque de précision et de potentielles incohérences dans la stratégie d'investissement mis en place, une erreur parvient (surement) lorsque le programme détecter une situation à trader, mon système de potentielle position à confirmer bloque avec l'erreur suivante:
+  
+  File "/Users/guilhembarroyer/Documents/code/projet_eif/L3EIF_Python_Project/code_src/output.py", line 160, in daily_trade
+    if positions['confirmation']==1:
+       ~~~~~~~~~^^^^^^^^^^^^^^^^
+TypeError: 'NoneType' object is not subscriptable
+
+  Erreur que je ne comprends pas (que je n'arrive pas à résoudre), mais qui n'intervient pas lorsqu'on utilise avec les données copiées par exemple (sûrement parce qu'aucune position de trade potentielle n'est alors repérée). Les commentaires vous permettront de comprendre la logique souhaitée malgré cela. Le module output est donc utilisé en boucle sur les données quotidiennes, et renvoie des dictionnaires avec les résultats et informations sur chaque journée dans le dictionnaire daily_results. Sachant qu'aucune position ne peut être prise, il n'y a pas de résultats sur le trade mais uniquement les informations journalières concernant les indicateurs et bougies. Une fonction d'analyse est donc obsèlete mais était censée traiter les performances de trade et en donner un résumé en étant appelé à la  fin de la fonction backtest (ligne 63).
+
+  En résumé, le programme est fonctionnel (en dehors de l'utilisation des caches) jusqu'à l'analyse des situations et la mise en place de stratégie de trade. J'ai été un peu trop ambitieux relativement au temps imparti (je n'ai pas forcément le réflexe du commit mais j'ai travaillé sur le projet de manière bien plus lissée que ce peut montrer le repository), aux limites de de l'API et le fait que je sois seul. j'espère que vous n'en tiendrez pas trop rigeur. Je tiens à vous rappeler les échanges de mail expliquant mon absence en cours et le fait que je sois seul sur le sujet, en raison de ma situation personnelle.
+  
+  Merci de votre compréhension,
+Guilhem barroyer, L3 EIF.
