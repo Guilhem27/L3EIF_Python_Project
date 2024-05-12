@@ -73,7 +73,8 @@ def analysis(daily_results):
         'sortie_consolid_baisse':0,
         'retournement_baisse':0,
         'retournement_hausse':0,
-        'cash':0
+        'cash':0,
+        'list':[]
     }
 
     for day, results in daily_results.items():
@@ -81,6 +82,7 @@ def analysis(daily_results):
         for trade in results['trade_infos']:
             analysis[trade['trade']]+= 1
         analysis['cash']=results['last_infos']['cash']
+        analysis['list'].append(results)
     analysis['total_gain']=1000*analysis['total_yield']
 
     return analysis
@@ -90,8 +92,8 @@ def analysis(daily_results):
 
 ### paramètres du backtest qu'on va utiliser pour tester notre programm  
 time_interval ="15min"    #en minutes (5,15,30)
-length_in_months= 1     #nombre de mois sur lesquels est réalisé le backtest
-symbol='AAPL'      
+length_in_months= 2    #nombre de mois sur lesquels est réalisé le backtest
+symbol='NVDA'      
 
 #lancement du programme principal de backtest avec 
 asyncio.run(main_backtest(symbol, time_interval, length_in_months))

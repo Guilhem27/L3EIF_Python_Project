@@ -10,12 +10,14 @@ def strat(candlestick, infos, last_ohlc):
             if mouvement_haussier_RSI(infos['indic_RSI'][:16])==1 and infos['trend']['value_growth']>0:
                 
                 print({'stopLoss':(infos['pivots']['s1']+3*infos['indic_ATR']), 'takeProfit': (infos['pivots']['r2']-2*infos['indic_ATR']), 'confirmation':False, 'buy':False, 'type_position': 'buy', 'type_trade':"sortie_consolid_hausse"})
-                return {'stopLoss':(infos['pivots']['s1']+3*infos['indic_ATR']), 'takeProfit': (infos['pivots']['r2']-2*infos['indic_ATR']), 'confirmation':False, 'buy':False, 'type_position': 'buy', 'type_trade':"sortie_consolid_hausse"}
+                print(candlestick)
+                return {'stopLoss':(infos['pivots']['s1']+5*infos['indic_ATR']), 'takeProfit': (infos['pivots']['r2']-2*infos['indic_ATR']), 'confirmation':False, 'buy':False, 'type_position': 'buy', 'type_trade':"sortie_consolid_hausse"}
 
             if mouvement_baissier_RSI(infos['indic_RSI'][:16])==2 and infos['trend']['value_growth']<0:
                 
                 print({'stopLoss':(infos['pivots']['s1']+3*infos['indic_ATR']), 'takeProfit': (infos['pivots']['r2']-2*infos['indic_ATR']), 'confirmation':False, 'buy':False, 'type_position': 'sell', 'type_trade':"retournement_baisse"})
-                return {'stopLoss':(infos['pivots']['s1']+3*infos['indic_ATR']), 'takeProfit': (infos['pivots']['r2']-2*infos['indic_ATR']), 'confirmation':False, 'buy':False, 'type_position': 'sell', 'type_trade':"retournement_baisse"}
+                print(candlestick)                
+                return {'stopLoss':(infos['pivots']['s1']+5*infos['indic_ATR']), 'takeProfit': (infos['pivots']['r2']-2*infos['indic_ATR']), 'confirmation':False, 'buy':False, 'type_position': 'sell', 'type_trade':"retournement_baisse"}
 
 
 
@@ -26,13 +28,15 @@ def strat(candlestick, infos, last_ohlc):
             
             if mouvement_baissier_RSI(infos['indic_RSI'][:16])==1 and infos['trend']['value_growth']<0:
                 
-                print({'stopLoss':(infos['pivots']['r1']-3*infos['indic_ATR']), 'takeProfit': (infos['pivots']['s2']+2*infos['indic_ATR']), 'confirmation':False, 'buy':False, 'type_position': 'sell', 'type_trade':"sortie_consolid_baisse"})
-                return {'stopLoss':(infos['pivots']['r1']-3*infos['indic_ATR']), 'takeProfit': (infos['pivots']['s2']+2*infos['indic_ATR']), 'confirmation':False, 'buy':False, 'type_position': 'sell', 'type_trade':"sortie_consolid_baisse"}
+                print({'stopLoss':(infos['pivots']['r1']-5*infos['indic_ATR']), 'takeProfit': (infos['pivots']['s2']+2*infos['indic_ATR']), 'confirmation':False, 'buy':False, 'type_position': 'sell', 'type_trade':"sortie_consolid_baisse"})
+                print(candlestick)
+                return {'stopLoss':(infos['pivots']['r1']-5*infos['indic_ATR']), 'takeProfit': (infos['pivots']['s2']+2*infos['indic_ATR']), 'confirmation':False, 'buy':False, 'type_position': 'sell', 'type_trade':"sortie_consolid_baisse"}
         
             if mouvement_haussier_RSI(infos['indic_RSI'][:16])==2 and infos['trend']['value_growth']>0:
                 
-                print({'stopLoss':(infos['pivots']['r1']-3*infos['indic_ATR']), 'takeProfit': (infos['pivots']['s2']+2*infos['indic_ATR']), 'confirmation':False, 'buy':False, 'type_position': 'buy', 'type_trade':"retournement_baisse"})
-                return {'stopLoss':(infos['pivots']['r1']-3*infos['indic_ATR']), 'takeProfit': (infos['pivots']['s2']+2*infos['indic_ATR']), 'confirmation':False, 'buy':False, 'type_position': 'buy', 'type_trade':"retournement_baisse"}
+                print({'stopLoss':(infos['pivots']['r1']-5*infos['indic_ATR']), 'takeProfit': (infos['pivots']['s2']+2*infos['indic_ATR']), 'confirmation':False, 'buy':False, 'type_position': 'buy', 'type_trade':"retournement_baisse"})
+                print(candlestick)
+                return {'stopLoss':(infos['pivots']['r1']-5*infos['indic_ATR']), 'takeProfit': (infos['pivots']['s2']+2*infos['indic_ATR']), 'confirmation':False, 'buy':False, 'type_position': 'buy', 'type_trade':"retournement_baisse"}
 
 
     #renvoie d'une situation neutre, sans position, si aucune stratégie ne correspond à la situation
@@ -112,22 +116,6 @@ def mouvement_baissier_RSI(RSI):
 
 
 
-    
-    #on initialise une valeur correspondant à l'écart des bandes 
-    diff=0
-    #et une valeur à renvoyer
-    return_value=1
-
-    #Parcours des 10 dernières coordonées des bandes de la plus ancienne à la plus récente
-    for values in reversed(bandes):
-        #si il y a un resserement des bandes on annule l'hypothèse d'un écartement
-        if values["bande_superieure"]-values["bande_inférieure"]<diff:
-            return_value=0
-        diff=values["bande_superieure"]-values["bande_inférieure"]
-    return return_value
-
-
-
  
 #Fonction de confirmation de prise de position
 #Prend en arguments la dernière bougie, la position que l'on veut confirmer, les points pivots et les 100 dernières bougies   
@@ -146,7 +134,7 @@ def strat_confirmation(candlestick, positions, level, last_ohlc, trend):
         elif positions['confirmation']==1:
             if (float(last_ohlc[0]['5. volume'])+float(last_ohlc[1]['5. volume'])+float(last_ohlc[2]['5. volume']))/3>1.4*trend['volume_mean']:
                 positions['confirmation']=2
-
+                print(candlestick)
     #confirmation d'une position de retournement baissier
     if positions['type_trade']=="retournement_baisse":
         
@@ -161,7 +149,7 @@ def strat_confirmation(candlestick, positions, level, last_ohlc, trend):
             for type, price in candlestick.items():
                 if float(price)<level['pp'] and type!='5. volume':
                     positions['confirmation']=2
-
+                    print(candlestick)
 
     #confirmation d'une position de sortie de phase de consolidation baissière
     if positions['type_trade']=="sortie_consolid_baisse":
@@ -171,10 +159,12 @@ def strat_confirmation(candlestick, positions, level, last_ohlc, trend):
                 if float(price)<level['pp'] and type!='5. volume':
                     positions['confirmation']=1
                     print('touchdown', price)
-            
+                    
+
         elif positions['confirmation']==1:
             if (float(last_ohlc[0]['5. volume'])+float(last_ohlc[1]['5. volume'])+float(last_ohlc[2]['5. volume']))/3>1.4*(trend['volume_mean']):
                 positions['confirmation']=2
+                print(candlestick)
 
     #confirmation d'une position de retournement haussier
     if positions['type_trade']=="retournement_hausse":
@@ -190,7 +180,7 @@ def strat_confirmation(candlestick, positions, level, last_ohlc, trend):
             for type, price in candlestick.items():
                 if float(price)>level['pp'] and type!='5. volume':
                     positions['confirmation']=2
-
+                    print(candlestick)
                 
 
     return positions
