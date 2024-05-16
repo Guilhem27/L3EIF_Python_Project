@@ -92,7 +92,6 @@ def daily_trade(raw_data, last_infos):
         if positions['buy']==True:
             
             #fermeture de position
-
             #dépassement haussier du TP en position longue ou dépassement baissier du TP eb position courte
             if (ohlc['2. high']>=positions['takeProfit'] and positions['type_position']=='buy') or (ohlc['3. low']<=positions['takeProfit'] and positions['type_position']=='sell'):
                 sell=buy['units']*positions['takeProfit']
@@ -108,13 +107,20 @@ def daily_trade(raw_data, last_infos):
 
             #si fermeture de position, sell prend alors le money out de la position
             if sell!=None:
-
-                print(sell, (sell/buy['units']))
+                
                 print(time, 'vendre')
+                print(sell, (sell/buy['units']))
+                print(' ')
 
                 #récupération de la valeur du compte avant la prise position pour le calcul de rendement
                 last_cash=last_infos['cash']
+                
+                print(last_cash)
 
+                #last_infos['cash']-=commission(buy['price']*buy['units'], buy['units'])
+
+                #last_infos['cash']-=commission(sell, sell/buy['units'])
+                
                 #considération du gain/perte de la position sur le compte investisseur 
                 #calcul différent selon qu'on soit sur une position longue ou courte
                 if positions['type_position']=="sell":
@@ -122,6 +128,8 @@ def daily_trade(raw_data, last_infos):
                 else:  
                     last_infos['cash']+=sell-buy['units']*buy['price']
                 
+                print(last_infos['cash'])
+
                 #récupération de la performance (rendement sur la position et type de trade (retournement haussier, conitnuation baissière....))
                 trade_infos.append({'gains':round(last_infos['cash']/last_cash-1, 8), 'trade': positions['type_trade']})
                 
@@ -158,16 +166,27 @@ def daily_trade(raw_data, last_infos):
             if positions['confirmation']==2:
 
                 #idem que précédemment
-                buy={'price':ohlc['4. close'], 'units': round(last_infos['cash']/ohlc['1. open'],3)}
+                buy={'price':ohlc['4. close'], 'units': round((last_infos['cash'])/ohlc['1. open'],3)}
                 positions['buy']=True
                 waiting_confirmation=0
-                print(buy)
                 print(time, 'achat')
+                print(buy)
+                print(" ")
+                last_infos['cash']-=commission(buy['price']*buy['units'], buy['units'])
+                
                 
     print(trade_infos)
     #renvoi des dernières informations, du rendement réalisé sur la journée et des informations sur le(s) trade(s) réalisé(s) sur la journée
-    return  {'last_infos': last_infos, 'yield':last_infos['cash']/initial_cash, 'trade_infos':trade_infos}
+    
+    if trade_infos!=[]:
+        return  {'last_infos': last_infos, 'yield':last_infos['cash']/initial_cash, 'trade_infos':trade_infos}
+    else: 
+        return {'last_infos': last_infos}
 
 
 
-
+def commission(total, units):
+    commission=units*0.005
+    if commission>total*0.005:
+        commission=total*0.005
+    return commission
