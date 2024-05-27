@@ -1,5 +1,5 @@
 #appel des modules indicateurs qui permettent de mettre quotidiennement à jour les informations d'AT qu'on utilisera pour nos prises de positions
-from indicators import movement, pivots, stochastic_oscillator, RSI, ATR, trend
+from indicators import movement, pivots, RSI, ATR, trend
 
 #appel des modules de trading, c'est-à-dire de décision concernant une prise de position en deux temps, un signal d'achat/de vente, et une confirmation de cette position
 from trading_strategy import strat, strat_confirmation
@@ -8,7 +8,7 @@ from trading_strategy import strat, strat_confirmation
 #fonction principale du programme appelée quotidiennement avec les données de trading du jour. 
 #Elle prend en compte les mouvements de prix, calcule les indicateurs techniques, prend des décisions 
 #de trading basées sur une stratégie pré-définie, et gère les positions ouvertes en conséquence
-def daily_trade(raw_data, last_infos):
+def daily_trade(raw_data, last_infos,rsi1, rsi2, rate1, rate2, vol1, vol2, sl1, sl2, tp1, tp2):
 
     #liste des rendements (ainsi que du type de trade) réalisés sur chaque position prise dans la journée de trade
     trade_infos=[]
@@ -76,11 +76,6 @@ def daily_trade(raw_data, last_infos):
         last_infos['indic_RSI'].pop()
         last_infos['indic_RSI'].insert(0,RSI(last_ohlc[:14]))
 
-        #'indic_RSI' prend 16 valeurs de la plus récente à la plus ancienne, calculées sur les 14 dernières valeurs OHLC
-        #permet d'évaluer des situations de surachat/survente
-        last_infos['indic_stoch'].pop()
-        last_infos['indic_stoch'].insert(0, stochastic_oscillator(last_ohlc[:14]))
-
 
         #'movement' rend compte du mouvement en cours (e.g.:{'length': 4, 'move': 0.04} signifie 
         #qu'il y aun mouvement haussier de 4 pourcents ininterrompu sur 4 ohlc) 
@@ -95,15 +90,26 @@ def daily_trade(raw_data, last_infos):
             #dépassement haussier du TP en position longue ou dépassement baissier du TP eb position courte
             if (ohlc['2. high']>=positions['takeProfit'] and positions['type_position']=='buy') or (ohlc['3. low']<=positions['takeProfit'] and positions['type_position']=='sell'):
                 sell=buy['units']*positions['takeProfit']
-
+                print('takeprofit')
+                print(ohlc)
             #dépassement baissier du SL en position longue ou dépassement haussier du SL en position courte
             elif (ohlc['3. low']<=positions['stopLoss'] and positions['type_position']=='buy') or (ohlc['2. high']>=positions['stopLoss'] and positions['type_position']=='sell'):
-                sell=buy['units']*positions['stopLoss']  
-            
+                sell=buy['units']*positions['stopLoss']
+                print('stoploss')
+                print(ohlc)
             #sortie de position avant la fin de la journée car daytrading, afin d'éviter le gap de marché
-            elif time=='19:30:00' or time=='19:35:00' or time=='19:40:00' or time=='19:45:00' or time=='19:50:00' or time=='19:55:00' or time=='20:00:00':
+            elif time == list(raw_data.keys())[-2]:
                 sell=buy['units']*ohlc['4. close']
+                print('last')
 
+            #else:
+             #   if positions['type_position']=='buy' and ohlc['4. close']>buy['price'] and last_infos['movement']['move']>0:
+              #      positions['stopLoss']=float(ohlc['4. close'])-positions['ecart']
+               #     print('new', positions)
+
+                #elif positions['type_position']=='sell' and ohlc['4. close']<buy['price'] and last_infos['movement']['move']<0:
+                 #   positions['stopLoss']=float(ohlc['4. close'])+positions['ecart']
+                  #  print('new', positions)
 
             #si fermeture de position, sell prend alors le money out de la position
             if sell!=None:
@@ -114,12 +120,11 @@ def daily_trade(raw_data, last_infos):
 
                 #récupération de la valeur du compte avant la prise position pour le calcul de rendement
                 last_cash=last_infos['cash']
-                
                 print(last_cash)
 
-                #last_infos['cash']-=commission(buy['price']*buy['units'], buy['units'])
-
-                #last_infos['cash']-=commission(sell, sell/buy['units'])
+                last_infos['cash']-=commission(buy['price']*buy['units'], buy['units'])
+                print('   ')
+                last_infos['cash']-=commission(sell, sell/buy['units'])
                 
                 #considération du gain/perte de la position sur le compte investisseur 
                 #calcul différent selon qu'on soit sur une position longue ou courte
@@ -147,13 +152,13 @@ def daily_trade(raw_data, last_infos):
 
             #recherche de position interessante en fonction du prix si pas de position existante
             if positions=={'stopLoss': None, 'takeProfit':None,'confirmation':0, 'buy':False,'type_position': None, 'type_trade':None}:
-                positions=strat(ohlc, last_infos, last_ohlc)
+                positions=strat(ohlc, last_infos, last_ohlc, rsi1, rsi2, rate1, rate2)
                 
             
             #attente de confirmation avec un délai de 5 candlestick, sinon on cherche une nouvelle position
             else:
                 
-                positions=strat_confirmation(ohlc, positions, last_infos['pivots'], last_ohlc[0:3], last_infos['trend'])
+                positions=strat_confirmation(ohlc, positions, last_infos, last_ohlc[0:3], last_infos['trend'], vol1, vol2, sl1, sl2, tp1, tp2)
                 waiting_confirmation+=1
                 
 
@@ -172,7 +177,7 @@ def daily_trade(raw_data, last_infos):
                 print(time, 'achat')
                 print(buy)
                 print(" ")
-                last_infos['cash']-=commission(buy['price']*buy['units'], buy['units'])
+                
                 
                 
     print(trade_infos)
@@ -189,4 +194,7 @@ def commission(total, units):
     commission=units*0.005
     if commission>total*0.005:
         commission=total*0.005
+    print('commission', commission)
     return commission
+
+

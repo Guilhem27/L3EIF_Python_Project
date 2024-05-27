@@ -54,25 +54,6 @@ def ATR(last_OCLH):
     return round(atr,5)
 
 
-def stochastic_oscillator(last_OCLH):
-    # Extrayez les prix de clôture de la liste des données OHLC
-    closes = [float(data['4. close']) for data in last_OCLH]
-
-    # Calcul du plus haut et du plus bas sur les 14 dernières périodes
-    high14 = max([float(d['2. high']) for d in last_OCLH])
-    low14 = min([float(d['3. low']) for d in last_OCLH])
-
-    # Dernier prix de clôture
-    close = closes[0]
-
-    # Calcul de la ligne %K
-    k = ((close - low14) / (high14 - low14)) * 100
-
-    # Calcul de la moyenne mobile de la ligne %K (ligne %D)
-    d = sum(closes[-3:]) / 3
-
-    return {'%K': round(k,5), '%D': round(d,5)}
-
 
 def pivots(high, low, closing):
 
