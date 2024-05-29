@@ -1,3 +1,0 @@
-action,total_yield,cash,long_total,long_mean,long_profit,long_profit_mean,long_loss,long_loss_mean,short_total,short_mean,short_profit,short_profit_mean,short_loss,short_loss_mean,total_gain
-"{'nom': 'Microsoft', 'symbole': 'MSFT', 'secteur': 'Technologie', 'liquidite': 'Haute'}","1,1733384085900003","1173,33840859",0,0,0,0,0,0,16,"0,01023061125",8,"0,025364938750000003",8,"-0,0049037162500000005",0
-"{'nom': 'Apple', 'symbole': 'AAPL', 'secteur': 'Technologie', 'liquidite': 'Haute'}","1,4023728909299988","1402,3728909299987",0,0,0,0,0,0,23,"0,015058435217391303",14,"0,029609541428571428",9,"-0,00757661888888889",0

@@ -5,14 +5,18 @@ import asyncio
 from output import daily_trade
 
 #appel du module de récupération de données (dans un cache au nom de l'action backtestée) dans le fichier data_recovery
-from local_data import main_data_recovery  #'from data_recovery' normalement
+from local_data import main_local_data_recovery  
+from data_recovery import main_data_recovery
 
 
 #programme appelant les différents modules externes de récupération de données, de trade, de calcul de résultats afin de réaliser le backtest de pmanière asynchrone
-async def main_backtest(symbol, time_interval,length_in_months,rsi1, rsi2, rate1, rate2, vol1, vol2, sl1, sl2, tp1, tp2): 
+async def main_backtest(symbol, time_interval,length_in_months,strat,rsi, rate, vol, sl, tp, viz): 
     
-    raw_data=await main_data_recovery(symbol, time_interval, length_in_months) 
-    
+    if viz=='first_backtest':
+        raw_data=await main_local_data_recovery(symbol, time_interval, length_in_months) 
+    elif viz=='second_backtest':
+        raw_data= await main_data_recovery(symbol, time_interval, 2)
+
     #informations de trade initiales sur lenext(iter(dico.values()))squelles vont se baser l'analyse technique intraday 
     last_infos = {
         #argent sur le compte initial
@@ -48,17 +52,20 @@ async def main_backtest(symbol, time_interval,length_in_months,rsi1, rsi2, rate1
         #récupération des résultats de la ième journée en utilisant la fonction daily_trade du module output
         #en utilisant notamment les données ohlc de la ième journée mais également toutes les informations antérieures 
         #stockées dans le dictionnaire 'last_infos' de la i-1ème journée, lui-même stocké dans les résultats de la journée précédente
-        daily_results[str(i)]=daily_trade(data_day, daily_results[str(i-1)]['last_infos'],rsi1, rsi2, rate1, rate2, vol1, vol2, sl1, sl2, tp1, tp2)
-        
-    print(analysis(daily_results))
+        daily_results[str(i)]=daily_trade(data_day, daily_results[str(i-1)]['last_infos'],strat,rsi, rate, vol, sl, tp)
+    
+    print(analysis(daily_results))  
     return analysis(daily_results)
 
+    
+
+    
 
 def analysis(daily_results):
-    analysis={'total_yield':1.0 , 
+    analysis={'total_yield':1.0 , 'ratio': 0.5,
         'cash':0,'long_total':0, 'long_mean': 0, 'long_profit': 0, 'long_profit_mean': 0, 'long_loss': 0, 'long_loss_mean': 0,
         'short_total':0, 'short_mean': 0, 'short_profit': 0, 'short_profit_mean': 0, 'short_loss': 0, 'short_loss_mean': 0,
-        'total_gain':{'0': 1}}
+        'trades':{'0': 1}}
     
 
     for day, results in daily_results.items():
@@ -67,15 +74,14 @@ def analysis(daily_results):
             
             analysis['total_yield']*=results['yield']
 
-            cash=str(results['last_infos']['cash'])
-            analysis['cash']=cash.replace('.',',')[:8]
+            analysis['cash']=results['last_infos']['cash']
 
             for trade in results['trade_infos']:
                 
-                if day not in analysis['total_gain']:
-                    analysis['total_gain'][day]=trade['gains']+1
+                if day not in analysis['trades']:
+                    analysis['trades'][day]=trade['gains']+1
                 else:
-                    analysis['total_gain'][day]=(trade['gains']+1)*analysis['total_gain'][day]
+                    analysis['trades'][day]=(trade['gains']+1)*analysis['trades'][day]
 
                 analysis[trade['trade']+'_total']+= 1
                 analysis[trade['trade']+'_mean']+= trade['gains']
@@ -88,8 +94,8 @@ def analysis(daily_results):
                     analysis[trade['trade']+'_profit']+= 1
                     analysis[trade['trade']+'_profit_mean']+= trade['gains']
 
-            cash=str(results['last_infos']['cash'])
-            analysis['cash']=cash.replace('.',',')
+            
+            analysis['cash']=results['last_infos']['cash']
     if analysis['long_loss']>0:
         analysis['long_loss_mean']= analysis['long_loss_mean']/analysis['long_loss']
     if analysis['long_profit']>0:
@@ -104,107 +110,88 @@ def analysis(daily_results):
     if analysis['short_total']>0:
         analysis['short_mean']= analysis['short_mean']/analysis['short_total']
 
+    if (analysis['short_total']+analysis['long_total'])>0:
+        analysis['ratio']=(analysis['short_profit']+analysis['long_profit'])/(analysis['short_total']+analysis['long_total'])
+    else:
+        analysis['ratio']=0 
     for key, result in analysis.items():
-        if key!='total_gain':
-            analysis[key]=str(result).replace('.',',')
+        if key!='trades':
+            analysis[key]=result
 
     return analysis
 
-### paramètres du backtest qu'on va utiliser pour tester notre programm  
-#time_interval ="15min"    #en minutes (5,15,30)
-#length_in_months=36     #nombre de mois sur lesquels est réalisé le backtest
-#symbol='IBM'      
-
-#lancement du programme principal de backtest avec 
-#asyncio.run(main_backtest(symbol, time_interval, length_in_months))
 
 import csv
 
-async def extraction(time_interval, period, universe):
-    results=[]
-    rsii1=[60,70,80]
-    rsii2=[30]
-    raate1=[1,2,3]
-    raate2=[-4]
-    vool1=[1.5,2,3]
-    vool2=[3]
-    sll1=[1,1.5,2]
-    tpp1=[1.5,2,2.5]
-    sll2=[1]
-    tpp2=[2.5]
-    for rsi1 in rsii1:
-        for rsi2 in rsii2:
-            for rate1 in raate1:
-                for rate2 in raate2:
-                    for vol1 in vool1 :
-                        for vol2 in vool2:
-                            for sl1 in sll1:
-                                for sl2 in sll2:
-                                    for tp1 in tpp1:
-                                        for tp2 in tpp2:          
-                                            totaly=0
-                                            i=0
-                                            profy=0    
-                                            ally=0                    
-                                            filename='backtest_results_'+time_interval+'_'+str(period)+'.csv'
-
-                                            with open(filename, 'w', newline='') as csvfile:
-                                                fieldnames = ['action', 'total_yield', 'cash', 
-                                                            'long_total', 'long_mean',
-                                                            'long_profit', 'long_profit_mean',
-                                                            'long_loss', 'long_loss_mean',
-                                                            'short_total', 'short_mean',
-                                                            'short_profit', 'short_profit_mean',
-                                                            'short_loss', 'short_loss_mean',
-                                                            'total_gain'
-                                                            ]
-                                                
-                                                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                                                writer.writeheader()
-
-                                                trades=[]
-
-                                                for action in universe:
-                                                    
-                                                    result=await main_backtest(action['symbole'], time_interval, period, rsi1, rsi2, rate1, rate2, vol1, vol2, sl1, sl2, tp1, tp2)
+async def extraction(time_interval, period, action):
+    straat=['short_trend','long_trend']
+    rsii = [25,30,35,40,45,50,55,60, 65,70,75]
+    raate = [1,1.5,2,2.5,3,3.5,4]
+    vool = [3.5,4,4.5,5,5.5,6] 
+    sll = [1, 1.5, 2,2.5,3,3.5,4]
+    tpp = [1.5,2,2.5,3,3.5,4,4.5]
+    
 
 
-                                                    trades.append(result['total_gain'])
+    filename = 'backtest_results_' + time_interval + '_' + str(period) + '.csv'
+    
+    # Ouverture du fichier en mode ajout ('a') pour ne pas écraser les données existantes
+    with open(filename, 'a', newline='') as csvfile:
+        fieldnames = ['action', 'total_yield', 'ratio', 'cash', 
+                      'long_total', 'long_mean', 'long_profit', 'long_profit_mean',
+                      'long_loss', 'long_loss_mean', 'short_total', 'short_mean',
+                      'short_profit', 'short_profit_mean', 'short_loss', 'short_loss_mean', 'trades', 'parameters']
+        
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        
+        # Écrire l'en-tête une seule fois si le fichier est vide
+        if csvfile.tell() == 0:
+            writer.writeheader()
+        
+        final_result = {'total_yield': 1.0, 
+                        'cash': 0, 'long_total': 0, 'long_mean': 0, 'long_profit': 0, 'long_profit_mean': 0, 
+                        'long_loss': 0, 'long_loss_mean': 0, 'short_total': 0, 'short_mean': 0, 
+                        'short_profit': 0, 'short_profit_mean': 0, 'short_loss': 0, 'short_loss_mean': 0, 
+                        'trades': {'0': 1}}
+        
+        
+        for strat in straat:
 
-                                                    row = {'action': action}
-                                                    row.update(result)
-                                                    row['total_gain']=0
-                                                    writer.writerow(row)
+            best_parameters = {}
 
-                                                    #ally+=float(row['long_total'].replace(',','.'))
-                                                    ally+=float(row['long_total'].replace(',','.'))
-                                                    #profy+=float(row['long_profit'].replace(',','.'))
-                                                    profy+=float(row['long_profit'].replace(',','.'))
-                                                    i+=1
-                                                    totaly+=profy/ally
-                                                
-                                                ratio=totaly/i  
-                                                total=1
+            for rsi in rsii:
+                for rate in raate:
+                    for vol in vool:
+                        for sl in sll:
+                            for tp in tpp:
 
-                                                for i in range(period*30):
-                                                    i=str(i)
-                                                    for stock in trades:
-                                                        for day, gains in stock.items():
-                                                            if i==day:
-                                                                total=total*gains
-                                                print(total)
-                                                results.append({'ratio':ratio, 'total': total,'rsi1':rsi1, 'rsi2':rsi2, 'rate1': rate1, 'rate2':rate2, 'vol1': vol1, 'vol2':vol2, 'sl1':sl1, 'sl2':sl2, 'tp1':tp1, 'tp2': tp2})
+                                result = await main_backtest(action['symbole'], time_interval, period, strat, rsi, rate, vol, sl, tp, 'first_backtest')
+                                
+                                # Condition pour choisir le meilleur résultat
+                                if result['total_yield'] >= final_result['total_yield'] and result['ratio'] > 0.5:
+                                    final_result = result
+                                    best_parameters = {'strat': strat, 'rsi': rsi, 'rate': rate,  'vol': vol, 'sl': sl, 'tp': tp}
 
-    results=sorted(results, key=lambda u: u['total'], reverse=True)      
-    print(results)  
+            # Préparation de la ligne à écrire
+            row = {'action': action['symbole'], 'parameters': best_parameters}
+            row.update(final_result)
+            writer.writerow(row)
+
+            row = {'action': action['symbole'], 'parameters': best_parameters}
+            second_result=await main_backtest(action['symbole'], time_interval, period, best_parameters['strat'], best_parameters['rsi'], best_parameters['rate'], best_parameters['vol'], best_parameters['sl'], best_parameters['tp'], 'second_backtest')
+            row.update(second_result)
+            writer.writerow(row)
+
 
 ### paramètres du backtest qu'on va utiliser pour tester notre programm  
 time_interval ="30min"    #en minutes (5,15,30)
-length_in_months=36     #nombre de mois sur lesquels est réalisé le backtest
+length_in_months=3   #nombre de mois sur lesquels est réalisé le backtest
+
+action={"nom": "Alphabet", "symbole": "GOOGL", "secteur": "Technologie", "liquidite": "Haute"}
 universe=[
     {"nom": "Microsoft", "symbole": "MSFT", "secteur": "Technologie", "liquidite": "Haute"},
     {"nom": "Apple", "symbole": "AAPL", "secteur": "Technologie", "liquidite": "Haute"},
-    {"nom": "NVIDIA", "symbole": "NVDA", "secteur": "Technologie", "liquidite": "Haute"},
+    #{"nom": "NVIDIA", "symbole": "NVDA", "secteur": "Technologie", "liquidite": "Haute"},
     {"nom": "Alphabet", "symbole": "GOOGL", "secteur": "Technologie", "liquidite": "Haute"},
     {"nom": "Amazon", "symbole": "AMZN", "secteur": "Technologie", "liquidite": "Haute"},
     {"nom": "Eli Lilly", "symbole": "LLY", "secteur": "Pharmaceutique", "liquidite": "Moyenne"},
@@ -232,7 +219,7 @@ universe=[
     {"nom": "TotalEnergies", "symbole": "TTE", "secteur": "Énergie", "liquidite": "Moyenne"},
     {"nom": "Verizon", "symbole": "VZ", "secteur": "Télécommunications", "liquidite": "Moyenne"},
     {"nom": "Morgan Stanley", "symbole": "MS", "secteur": "Services financiers", "liquidite": "Haute"},
-    {"nom": "Pfizer", "symbole": "PFE", "secteur": "Pharmaceutique", "liquidite": "Haute"},
+    #{"nom": "Pfizer", "symbole": "PFE", "secteur": "Pharmaceutique", "liquidite": "Haute"},
     {"nom": "Goldman Sachs", "symbole": "GS", "secteur": "Services financiers", "liquidite": "Haute"},
     {"nom": "IBM", "symbole": "IBM", "secteur": "Technologie", "liquidite": "Haute"},
     {"nom": "Philip Morris", "symbole": "PM", "secteur": "Tabac", "liquidite": "Moyenne"},
@@ -244,7 +231,7 @@ universe=[
     {"nom": "Airbus", "symbole": "AIR", "secteur": "Aérospatiale", "liquidite": "Moyenne"},
     {"nom": "Intel", "symbole": "INTC", "secteur": "Technologie", "liquidite": "Haute"},
     {"nom": "Meta", "symbole": "META", "secteur": "Technologie", "liquidite": "Haute"},
-    {"nom": "Netflix", "symbole": "NFLX", "secteur": "Services de diffusion en continu", "liquidite": "Moyenne"},
+    ##{"nom": "Netflix", "symbole": "NFLX", "secteur": "Services de diffusion en continu", "liquidite": "Moyenne"},
     {"nom": "PayPal", "symbole": "PYPL", "secteur": "Services financiers", "liquidite": "Moyenne"},
     {"nom": "Square", "symbole": "SQ", "secteur": "Technologie financière", "liquidite": "Moyenne"},
     {"nom": "Salesforce", "symbole": "CRM", "secteur": "Logiciels", "liquidite": "Moyenne"},
@@ -252,7 +239,6 @@ universe=[
     {"nom": "DocuSign", "symbole": "DOCU", "secteur": "Technologie d'entreprise", "liquidite": "Moyenne"},
     {"nom": "Shopify", "symbole": "SHOP", "secteur": "Commerce électronique", "liquidite": "Moyenne"},
     {"nom": "Adobe", "symbole": "ADBE", "secteur": "Technologie", "liquidite": "Haute"},
-    {"nom": "Netflix", "symbole": "NFLX", "secteur": "Services de diffusion en continu", "liquidite": "Moyenne"},
     {"nom": "Palantir Technologies", "symbole": "PLTR", "secteur": "Analytique de données", "liquidite": "Moyenne"},
     {"nom": "Roblox", "symbole": "RBLX", "secteur": "Jeux vidéo", "liquidite": "Moyenne"},
     {"nom": "Unity Software", "symbole": "U", "secteur": "Technologie", "liquidite": "Moyenne"},
@@ -267,5 +253,4 @@ universe=[
 ]
 
 #lancement du programme principal de backtest avec 
-asyncio.run(extraction(time_interval, length_in_months, universe))
-
+asyncio.run(extraction(time_interval, length_in_months, action))

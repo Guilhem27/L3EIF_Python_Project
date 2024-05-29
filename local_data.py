@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 #main fonction qui va récupérer les données OHLC de l'action donnée (par le symbole) pour des intervalles de temps d'OHLC
 #précisés et une durée de backtest donnée.
-async def main_data_recovery(symbol, time_interval, length_in_months):
+async def main_local_data_recovery(symbol, time_interval, length_in_months):
     
     #les données sont téléchargées dans une variable data grâce à la fonction telecharger_donnees_alpha_vantage
     data = await telecharger_donnees_alpha_vantage(symbol, time_interval, length_in_months)
@@ -53,14 +53,17 @@ def last_months(length):
     #récupération de la date actuelle
     current_date = datetime.now()
     result = []
-    
+    #recule d'un mois pour pouvoir y ajouter le précédent 
+    current_date -= timedelta(days=current_date.day)
     for i in range(length):
+        #recule d'un mois pour pouvoir y ajouter le précédent 
+        current_date -= timedelta(days=current_date.day)
         #récupère le mois demandé dans le format adapté pour l'API d'Alpha Venture
         month_str = current_date.strftime('%Y-%m')
         result.append(month_str)
-        #recule d'un mois pour pouvoir y ajouter le précédent 
-        current_date -= timedelta(days=current_date.day)
     return result
+
+print(last_months(2))
 
 #cette fonction sépare les données mensuelles en données journalières
 def data_by_day(donnees_brutes):

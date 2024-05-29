@@ -8,7 +8,7 @@ from trading_strategy import strat, strat_confirmation
 #fonction principale du programme appelée quotidiennement avec les données de trading du jour. 
 #Elle prend en compte les mouvements de prix, calcule les indicateurs techniques, prend des décisions 
 #de trading basées sur une stratégie pré-définie, et gère les positions ouvertes en conséquence
-def daily_trade(raw_data, last_infos,rsi1, rsi2, rate1, rate2, vol1, vol2, sl1, sl2, tp1, tp2):
+def daily_trade(raw_data, last_infos,straty,rsi, rate, vol, sl, tp):
 
     #liste des rendements (ainsi que du type de trade) réalisés sur chaque position prise dans la journée de trade
     trade_infos=[]
@@ -152,13 +152,13 @@ def daily_trade(raw_data, last_infos,rsi1, rsi2, rate1, rate2, vol1, vol2, sl1, 
 
             #recherche de position interessante en fonction du prix si pas de position existante
             if positions=={'stopLoss': None, 'takeProfit':None,'confirmation':0, 'buy':False,'type_position': None, 'type_trade':None}:
-                positions=strat(ohlc, last_infos, last_ohlc, rsi1, rsi2, rate1, rate2)
+                positions=strat(ohlc, last_infos, last_ohlc,  straty, rsi, rate)
                 
             
             #attente de confirmation avec un délai de 5 candlestick, sinon on cherche une nouvelle position
             else:
                 
-                positions=strat_confirmation(ohlc, positions, last_infos, last_ohlc[0:3], last_infos['trend'], vol1, vol2, sl1, sl2, tp1, tp2)
+                positions=strat_confirmation(ohlc, positions, last_infos, last_ohlc[0:3], last_infos['trend'], vol, sl, tp)
                 waiting_confirmation+=1
                 
 

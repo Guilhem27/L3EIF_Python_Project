@@ -28,7 +28,7 @@ async def telecharger_donnees_alpha_vantage(symbol, time_interval, length_in_mon
         for month in (reversed(months)):
             
             #récupération du lien de l'APi d'Alpha Venture en prennant les arguments symbol: action,time_interval: pour avoir des intervalles d'OHLC précises, month: mois de données recherchées, outputsize=full: pour avoir l'entiereté des données du mois voulu
-            url = f'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval={time_interval}&month={month}&outputsize=full&apikey=D7U8ZS51ROCMQM79'
+            url = f'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval={time_interval}&month={month}&outputsize=full&apikey=40N5RGVOW4H6UJZ4'
             
             #garantit que la session HTTP est correctement ouverte et fermée après utilisation
             async with aiohttp.ClientSession() as session:
