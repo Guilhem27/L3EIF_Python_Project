@@ -3,8 +3,7 @@ import os
 
 #bibliothèque permettant d'effectuer des requêtes HTTP de manière asynchrone
 import aiohttp
-#import de classes permettant de manipuler des durées temporelles
-from datetime import datetime, timedelta
+
 
 #main fonction qui va récupérer les données OHLC de l'action donnée (par le symbole) pour des intervalles de temps d'OHLC
 #précisés et une durée de backtest donnée.
@@ -47,6 +46,8 @@ async def telecharger_donnees_alpha_vantage(symbol, time_interval, length_in_mon
             
     return all_data
 
+#import de classes permettant de manipuler des durées temporelles
+from datetime import datetime, timedelta
 
 def last_months(length):
 
@@ -54,16 +55,22 @@ def last_months(length):
     current_date = datetime.now()
     result = []
     #recule d'un mois pour pouvoir y ajouter le précédent 
-    current_date -= timedelta(days=current_date.day)
+
+    #mars current_date -= timedelta(days=current_date.day)
+
+    current_date -= timedelta(days=current_date.day)   #avril
+   
     for i in range(length):
         #recule d'un mois pour pouvoir y ajouter le précédent 
         current_date -= timedelta(days=current_date.day)
         #récupère le mois demandé dans le format adapté pour l'API d'Alpha Venture
         month_str = current_date.strftime('%Y-%m')
         result.append(month_str)
+   
     return result
 
-print(last_months(2))
+print(last_months(1))
+
 
 #cette fonction sépare les données mensuelles en données journalières
 def data_by_day(donnees_brutes):

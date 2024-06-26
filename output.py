@@ -1,5 +1,5 @@
 #appel des modules indicateurs qui permettent de mettre quotidiennement à jour les informations d'AT qu'on utilisera pour nos prises de positions
-from indicators import movement, pivots, RSI, ATR, trend
+from indicators import movement, pivots, RSI, ATR, trend, mean
 
 #appel des modules de trading, c'est-à-dire de décision concernant une prise de position en deux temps, un signal d'achat/de vente, et une confirmation de cette position
 from trading_strategy import strat, strat_confirmation
@@ -8,7 +8,7 @@ from trading_strategy import strat, strat_confirmation
 #fonction principale du programme appelée quotidiennement avec les données de trading du jour. 
 #Elle prend en compte les mouvements de prix, calcule les indicateurs techniques, prend des décisions 
 #de trading basées sur une stratégie pré-définie, et gère les positions ouvertes en conséquence
-def daily_trade(raw_data, last_infos,straty,rsi, rate, vol, sl, tp):
+def daily_trade(raw_data, last_infos,straty,rsi, rate, vol, sl, tp, len_EMA, len_trend):
 
     #liste des rendements (ainsi que du type de trade) réalisés sur chaque position prise dans la journée de trade
     trade_infos=[]
@@ -66,21 +66,23 @@ def daily_trade(raw_data, last_infos,straty,rsi, rate, vol, sl, tp):
 
         #calcul des indicateurs
 
-        last_infos['trend']=trend(last_ohlc[:100])
+        last_infos['trend']=trend(last_ohlc[:len_trend])
 
         #'indic_ATR' rend une valeur qui permet d'évaluer les TP et SL (sorte d'écart-type), calculé sur les 14 derniers ohlc
         last_infos['indic_ATR']=ATR(last_ohlc[:14])
         
         #'indic_RSI' prend 16 valeurs de la plus récente à la plus ancienne, calculées sur les 14 dernières valeurs OHLC
         #permet d'évaluer des situations de surachat/survente
-        last_infos['indic_RSI'].pop()
-        last_infos['indic_RSI'].insert(0,RSI(last_ohlc[:14]))
+        last_infos['indic_RSI']=RSI(last_ohlc[:14])
+        
 
 
         #'movement' rend compte du mouvement en cours (e.g.:{'length': 4, 'move': 0.04} signifie 
         #qu'il y aun mouvement haussier de 4 pourcents ininterrompu sur 4 ohlc) 
         last_infos['movement']=movement(ohlc, last_infos['movement'])
+        
 
+        last_infos['EMA']=mean(last_ohlc[:len_EMA])
 
 
         #considération d'une position d'achat (prend en compte une position "short"), pour considérer une potentielle sortie de position ou non
@@ -90,17 +92,17 @@ def daily_trade(raw_data, last_infos,straty,rsi, rate, vol, sl, tp):
             #dépassement haussier du TP en position longue ou dépassement baissier du TP eb position courte
             if (ohlc['2. high']>=positions['takeProfit'] and positions['type_position']=='buy') or (ohlc['3. low']<=positions['takeProfit'] and positions['type_position']=='sell'):
                 sell=buy['units']*positions['takeProfit']
-                print('takeprofit')
-                print(ohlc)
+                #print('takeprofit')
+                #print(ohlc)
             #dépassement baissier du SL en position longue ou dépassement haussier du SL en position courte
             elif (ohlc['3. low']<=positions['stopLoss'] and positions['type_position']=='buy') or (ohlc['2. high']>=positions['stopLoss'] and positions['type_position']=='sell'):
                 sell=buy['units']*positions['stopLoss']
-                print('stoploss')
-                print(ohlc)
+                #print('stoploss')
+                #print(ohlc)
             #sortie de position avant la fin de la journée car daytrading, afin d'éviter le gap de marché
             elif time == list(raw_data.keys())[-2]:
                 sell=buy['units']*ohlc['4. close']
-                print('last')
+                #print('last')
 
             #else:
              #   if positions['type_position']=='buy' and ohlc['4. close']>buy['price'] and last_infos['movement']['move']>0:
@@ -114,16 +116,16 @@ def daily_trade(raw_data, last_infos,straty,rsi, rate, vol, sl, tp):
             #si fermeture de position, sell prend alors le money out de la position
             if sell!=None:
                 
-                print(time, 'vendre')
-                print(sell, (sell/buy['units']))
-                print(' ')
+                #print(time, 'vendre')
+                #print(sell, (sell/buy['units']))
+                #print(' ')
 
                 #récupération de la valeur du compte avant la prise position pour le calcul de rendement
                 last_cash=last_infos['cash']
-                print(last_cash)
+                #print(last_cash)
 
                 last_infos['cash']-=commission(buy['price']*buy['units'], buy['units'])
-                print('   ')
+                #print('   ')
                 last_infos['cash']-=commission(sell, sell/buy['units'])
                 
                 #considération du gain/perte de la position sur le compte investisseur 
@@ -133,7 +135,7 @@ def daily_trade(raw_data, last_infos,straty,rsi, rate, vol, sl, tp):
                 else:  
                     last_infos['cash']+=sell-buy['units']*buy['price']
                 
-                print(last_infos['cash'])
+                #print(last_infos['cash'])
 
                 #récupération de la performance (rendement sur la position et type de trade (retournement haussier, conitnuation baissière....))
                 trade_infos.append({'gains':round(last_infos['cash']/last_cash-1, 8), 'trade': positions['type_trade']})
@@ -174,13 +176,13 @@ def daily_trade(raw_data, last_infos,straty,rsi, rate, vol, sl, tp):
                 buy={'price':ohlc['4. close'], 'units': round((last_infos['cash'])/ohlc['1. open'],3)}
                 positions['buy']=True
                 waiting_confirmation=0
-                print(time, 'achat')
-                print(buy)
-                print(" ")
+                #print(time, 'achat')
+                #print(buy)
+                #print(" ")
                 
                 
                 
-    print(trade_infos)
+    #print(trade_infos)
     #renvoi des dernières informations, du rendement réalisé sur la journée et des informations sur le(s) trade(s) réalisé(s) sur la journée
     
     if trade_infos!=[]:
@@ -194,7 +196,7 @@ def commission(total, units):
     commission=units*0.005
     if commission>total*0.005:
         commission=total*0.005
-    print('commission', commission)
+    #print('commission', commission)
     return commission
 
 

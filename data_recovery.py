@@ -1,7 +1,5 @@
 #bibliothèque permettant d'effectuer des requêtes HTTP de manière asynchrone
 import aiohttp
-#import de classes permettant de manipuler des durées temporelles
-from datetime import datetime, timedelta
 
 #main fonction qui va récupérer les données OHLC de l'action donnée (par le symbole) pour des intervalles de temps d'OHLC
 #précisés et une durée de backtest donnée.
@@ -10,8 +8,6 @@ async def main_data_recovery(symbol, time_interval, length_in_months):
     #les données sont téléchargées dans une variable data grâce à la fonction telecharger_donnees_alpha_vantage
     data = await telecharger_donnees_alpha_vantage(symbol, time_interval, length_in_months)
     
-    
-    print(data)
     return data
 
 #la fonction récupère dans l'API d'alpha venture les données demandées 
@@ -56,21 +52,29 @@ async def telecharger_donnees_alpha_vantage(symbol, time_interval, length_in_mon
         return(all_data)  
 
 
+#import de classes permettant de manipuler des durées temporelles
+from datetime import datetime, timedelta
 
 #la fonction détermine une liste des mois correspondants au nderniers mois demandés du plus ancien au dernier en date, dans le format adapté pour récupérer les données OHLC de chaque mois
 def last_months(length):
 
     #récupération de la date actuelle
+
     current_date = datetime.now()
     result = []
-    
+    #mars current_date -= timedelta(days=current_date.day)
+
+    #avril current_date -= timedelta(days=current_date.day)
+    print(current_date)
     for i in range(length):
+        #recule d'un mois pour pouvoir y ajouter le précédent 
+        current_date -= timedelta(days=current_date.day) #mai
         #récupère le mois demandé dans le format adapté pour l'API d'Alpha Venture
         month_str = current_date.strftime('%Y-%m')
         result.append(month_str)
-        #recule d'un mois pour pouvoir y ajouter le précédent 
-        current_date -= timedelta(days=current_date.day)
     return result
+
+print(last_months(1))
 
 #cette fonction sépare les données mensuelles en données journalières
 def data_by_day(donnees_brutes):

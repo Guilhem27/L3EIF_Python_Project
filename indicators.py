@@ -108,3 +108,11 @@ def trend(data):
     volume_mean= sum(volumes)/len(volumes)
     # Renvoyer le pourcentage de différence et le taux de croissance
     return {'value_growth': round(value_growth,5), 'volume_mean':round(volume_mean)}
+
+def mean(data):
+    closes = np.array([float(d['4. close']) for d in data])
+    total=0
+    div=len(data)
+    for i in closes:
+        total+=i
+    return (total/div)
